@@ -1,0 +1,15 @@
+# See: http://code.google.com/p/arduino/wiki/Platforms
+
+##############################################################
+
+omzlo_canzero.name=Omzlo CANZERO
+omzlo_canzero.build.mcu=cortex-m0plus
+omzlo_canzero.build.f_cpu=48000000L
+omzlo_canzero.build.board=SAMD_ZERO
+omzlo_canzero.build.core=arduino
+omzlo_canzero.build.extra_flags=-D__SAMD21G18A__
+omzlo_canzero.build.ldscript=linker_scripts/gcc/flash_with_bootloader.ld
+omzlo_canzero.build.variant=omzlo_canzero
+omzlo_canzero.build.variant_system_lib=
+omzlo_canzero.build.extra_combine_flags=
+

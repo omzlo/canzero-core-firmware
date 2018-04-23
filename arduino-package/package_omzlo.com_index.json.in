@@ -1,0 +1,33 @@
+{
+    "packages": [
+        {
+            "name": "Omzlo",
+            "maintainer": "Alain Pannetrat",		  
+            "websiteURL": "http://omzlo.com",
+            "email": "omzlo.electronics@gmail.com",
+            "help": {
+                "online": "http://omzlo.com/omzlo-canzero-arduino"
+            },
+            "platforms": [
+                {
+                    "name": "Omzlo SAMD Boards",
+                    "architecture": "samd",
+                    "version": "${version}",
+                    "category": "Contributed",
+                    "url": "http://omzlo.com/downloads/${package_name}.zip",
+                    "checksum": "SHA-256:${checksum}",
+                    "archiveFileName": "${package_name}.zip",
+                    "size": "${size}",
+                    "help": {
+                        "online": "http://omzlo.com/omzlo-canzero-arduino"
+                    },
+                    "boards": [
+                        { "name": "Omzlo CANZERO" }
+                    ],
+                    "toolsDependencies": []
+                }
+            ],      	
+            "tools": []
+        }
+    ]  
+}

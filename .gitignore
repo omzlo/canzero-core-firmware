@@ -1,0 +1,9 @@
+*.o
+*.elf
+*.hex
+*.d
+.DS_Store
+.*.swp
+tags
+ctags
+arduino-package/boards/*.zip
