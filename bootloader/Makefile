@@ -14,7 +14,7 @@ SIZEUP=arm-none-eabi-size
 ELF=$(notdir $(CURDIR)).elf
 HEX=$(notdir $(CURDIR)).hex
 
-ASF_ROOT=../../../Src/xdk-asf-3.33.0
+ASF_ROOT=../../../../Src/xdk-asf-3.33.0
 
 INCLUDES= \
 		  sam0/utils/cmsis/samd21/include \
@@ -24,14 +24,13 @@ INCLUDES= \
 
 
 #OBJS=$(STARTUP) main.o $(patsubst %.c,$(ASF_ROOT)/%.o,$(SOURCES))
-OBJS = $(STARTUP) main.o systick.o serial.o ../omzlo-zero-lib/spi.o ../omzlo-zero-lib/nocan_ll.o
+OBJS = $(STARTUP) main.o systick.o serial.o ../lib/spi.o ../lib/nocan_ll.o
 
 LDFLAGS+= -T$(LDSCRIPT) -mthumb -mcpu=cortex-m0 -Wl,--gc-sections 
 CFLAGS+= -mcpu=cortex-m0 -mthumb -g -Os
-CFLAGS+= $(INCLUDES:%=-I $(ASF_ROOT)/%) -I . -I ../omzlo-zero-lib/
+CFLAGS+= $(INCLUDES:%=-I $(ASF_ROOT)/%) -I . -I ../lib/
 CFLAGS+= -D$(PTYPE)
 CFLAGS+= -DDEBUG
-CFLAGS+= -DCANZERO_MKR
 CFLAGS+=-pipe -Wall -Werror-implicit-function-declaration -Wpointer-arith -fno-strict-aliasing -ffunction-sections -fdata-sections -Wchar-subscripts -Wcomment -Wformat=2 -Wmain -Wparentheses -Wsequence-point -Wreturn-type -Wswitch -Wtrigraphs -Wunused -Wuninitialized -Wunknown-pragmas -Wfloat-equal -Wundef -Wshadow  -Wwrite-strings -Wsign-compare -Waggregate-return -Wmissing-declarations -Wformat -Wmissing-format-attribute -Wno-deprecated-declarations -Wpacked -Wredundant-decls -Wlong-long -Wunreachable-code -Wcast-align --param max-inline-insns-single=500
 
 $(ELF):		$(OBJS)

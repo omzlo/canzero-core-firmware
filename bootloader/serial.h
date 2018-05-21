@@ -15,5 +15,6 @@ int serial_printf(const char *format, ...);
 extern unsigned serial_debug_enable;
 int serial_debug_printf(const char *format, ...);
 
+int serial_reset(void);
 
 #endif

@@ -38,7 +38,6 @@ int serial_open(uint32_t baud)
             return -1;
     }
 
-#ifdef CANZERO_MKR
     // PB23 is D13, aka RX, aka SERCOM5.PAD3
     PORT->Group[1].PINCFG[(PIN_PB23&31)].bit.PMUXEN = 1;
     // PMUXO = PMUX odd 4bits 4..7 
@@ -99,122 +98,48 @@ int serial_open(uint32_t baud)
     /* Enable SERCOM UART */
     SERCOM5->USART.CTRLA.bit.ENABLE = 1;
 
-#else
-    // PA11 is D0, aka RX, aka SERCOM0.PAD3
-    PORT->Group[0].PINCFG[PIN_PA11].bit.PMUXEN = 1;
-    // PMUXO = PMUX odd 4bits 4..7 
-    PORT->Group[0].PMUX[PIN_PA11/2].bit.PMUXO = PORT_PMUX_PMUXE_C;
-
-    // PA10 is D1, aka TX, aka SERCOM0.PAD2
-    PORT->Group[0].PINCFG[PIN_PA10].bit.PMUXEN = 1;
-    // PMUXE = MUX even 4bits 0..3
-    PORT->Group[0].PMUX[PIN_PA10/2].bit.PMUXE = PORT_PMUX_PMUXE_C;
-
-    /* Enable clock for BOOT_USART_MODULE */
-    PM->APBCMASK.reg |= PM_APBCMASK_SERCOM0;
-
-    /* Set GCLK_GEN0 as source for GCLK_ID_SERCOMx_CORE */
-    GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID( GCLK_CLKCTRL_ID_SERCOM0_CORE_Val ) | // Generic Clock 0 (SERCOMx)
-        GCLK_CLKCTRL_GEN_GCLK0 | // Generic Clock Generator 0 is source
-        GCLK_CLKCTRL_CLKEN ;
-
-    /* Wait until ready ?needed? */
-    while ( GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY )
-    {
-        /* Wait for synchronization */
-    }
-
-    /* Wait for synchronization */
-    while(SERCOM0->USART.SYNCBUSY.bit.ENABLE);
-
-    /* Disable the SERCOM UART module */
-    SERCOM0->USART.CTRLA.bit.ENABLE = 0;
-    /* Wait for synchronization */
-    while(SERCOM0->USART.SYNCBUSY.bit.SWRST);
-
-    /* Perform a software reset */
-    SERCOM0->USART.CTRLA.bit.SWRST = 1;
-    /* Wait for synchronization */
-    while(SERCOM0->USART.CTRLA.bit.SWRST);
-    /* Wait for synchronization */
-    while(SERCOM0->USART.SYNCBUSY.bit.SWRST || SERCOM0->USART.SYNCBUSY.bit.ENABLE);
-
-    /* Update the UART pad settings, mode and data order settings 
-     * SERCOM_USART_CTRLA_MODE(1) -> USART with internal clock.
-     * pad_conf -> TXPO and RXPO selects pads
-     * DORD -> Data order 0:MSB first, 1:LSB first
-     */
-    SERCOM0->USART.CTRLA.reg = SERCOM_USART_CTRLA_RXPO(3) 
-        | SERCOM_USART_CTRLA_TXPO(1) 
-        | SERCOM_USART_CTRLA_MODE(1) 
-        | SERCOM_USART_CTRLA_DORD;
-    /* Wait for synchronization */
-    while(SERCOM0->USART.SYNCBUSY.bit.CTRLB);
-
-    /* Enable transmit and receive and set data size to 8 bits */
-    SERCOM0->USART.CTRLB.reg = SERCOM_USART_CTRLB_RXEN | SERCOM_USART_CTRLB_TXEN | SERCOM_USART_CTRLB_CHSIZE(0);
-    /* Load the baud value */
-    SERCOM0->USART.BAUD.reg = baud_val;
-    /* Wait for synchronization */
-    while(SERCOM0->USART.SYNCBUSY.bit.ENABLE);
-    /* Enable SERCOM UART */
-    SERCOM0->USART.CTRLA.bit.ENABLE = 1;
-#endif
     return 0;
 }
 
 int serial_close()
 {
-#ifdef CANZERO_MKR
     /* Wait for synchronization */
 	while(SERCOM5->USART.SYNCBUSY.bit.ENABLE);
 	/* Disable SERCOM UART */
 	SERCOM5->USART.CTRLA.bit.ENABLE = 0;
-#else
+    return 0;
+}
+
+int serial_reset()
+{
+    /* Perform a software reset */
+    SERCOM5->USART.CTRLA.bit.SWRST = 1;
     /* Wait for synchronization */
-	while(SERCOM0->USART.SYNCBUSY.bit.ENABLE);
-	/* Disable SERCOM UART */
-	SERCOM0->USART.CTRLA.bit.ENABLE = 0;
-#endif
+    while(SERCOM5->USART.CTRLA.bit.SWRST);
+    /* Wait for synchronization */
+    while(SERCOM5->USART.SYNCBUSY.bit.SWRST || SERCOM5->USART.SYNCBUSY.bit.ENABLE);
     return 0;
 }
 
 int serial_putc(int c)
 {
-#ifdef CANZERO_MKR
     while (SERCOM5->USART.INTFLAG.bit.DRE==0) {}
     SERCOM5->USART.DATA.reg = c;
-#else
-    while (SERCOM0->USART.INTFLAG.bit.DRE==0) {}
-    SERCOM0->USART.DATA.reg = c;
-#endif
     return c;
 }
 
 int serial_getc()
 {
-#ifdef CANZERO_MKR
     while(!SERCOM5->USART.INTFLAG.bit.RXC);
     /* We should check for errors here in 
      * SERCOM0->USART.STATUS.bit.PERR || SERCOM0->USART.STATUS.bit.FERR || SERCOM0->USART.STATUS.bit.BUFOVF
      */
     return (int)(SERCOM5->USART.DATA.reg&0xFF);
-#else
-    while(!SERCOM0->USART.INTFLAG.bit.RXC);
-    /* We should check for errors here in 
-     * SERCOM0->USART.STATUS.bit.PERR || SERCOM0->USART.STATUS.bit.FERR || SERCOM0->USART.STATUS.bit.BUFOVF
-     */
-    return (int)(SERCOM0->USART.DATA.reg&0xFF);
-#endif
 }
 
 int serial_available(void)
 {
-#ifdef CANZERO_MKR
     return SERCOM5->USART.INTFLAG.bit.RXC;
-#else
-    return SERCOM0->USART.INTFLAG.bit.RXC;
-#endif
 }
 
 #ifndef NULL

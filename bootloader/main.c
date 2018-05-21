@@ -119,7 +119,7 @@ int main(void)
                             packet_data[0] = DSU->DID.reg>>24;
                             packet_data[1] = DSU->DID.reg>>16;
                             packet_data[2] = DSU->DID.reg>>8;
-                            packet_data[4] = DSU->DID.reg;
+                            packet_data[3] = DSU->DID.reg;
                             nocan_ll_send(EID_SYS(nid, LL_SYS_BOOTLOADER_GET_SIGNATURE_ACK, 0),4,packet_data);
                             break;
 
@@ -259,6 +259,10 @@ void try_start_app(void)
     }
 
     nocan_ll_set_led(1);
+    dprintf("\r\n** Launching main app **\r\n\r\n");
+#ifdef DEBUG
+    serial_reset();
+#endif
 
     __set_MSP( (uint32_t)(__sketch_vectors_ptr) );
 

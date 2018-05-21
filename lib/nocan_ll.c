@@ -31,8 +31,8 @@
 
 
 /* There are two PINS defined and used here:
- * CAN_RECV_INT is PB22
- * CAN_BUSY_INT is PB23
+ * CAN_RECV_INT is PB27
+ * CAN_BUSY_INT is PB28
  */
 
 extern inline int nocan_ll_tx_pending();
@@ -60,17 +60,10 @@ int nocan_ll_init(uint8_t reset_type)
     uint8_t buf[4];
 
     // Configure GPIOs for CAN_RECV_INT and CAN_BUSY_INT as inputs
-#ifdef CANZERO_MKR
     PORT->Group[0].DIRCLR.reg = PORT_PA27;
     PORT->Group[0].PINCFG[27].reg = PORT_PINCFG_INEN;
     PORT->Group[0].DIRCLR.reg = PORT_PA28;
     PORT->Group[0].PINCFG[28].reg = PORT_PINCFG_INEN;
-#else
-    PORT->Group[1].DIRCLR.reg = PORT_PB22;
-    PORT->Group[1].PINCFG[22].reg = PORT_PINCFG_INEN;
-    PORT->Group[1].DIRCLR.reg = PORT_PB23;
-    PORT->Group[1].PINCFG[23].reg = PORT_PINCFG_INEN;
-#endif
 
     // init SPI and reset
     spi_init(500000/2);

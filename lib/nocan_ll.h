@@ -65,21 +65,13 @@ int nocan_ll_init(uint8_t reset_type);
 inline int nocan_ll_tx_pending() __attribute__((always_inline));
 inline int nocan_ll_tx_pending()
 {
-#ifdef CANZERO_MKR
     return (PORT->Group[0].IN.reg & PORT_PA27)==0;
-#else
-    return (PORT->Group[1].IN.reg & PORT_PB23)==0;
-#endif
 }
 
 inline int nocan_ll_rx_pending() __attribute__((always_inline));
 inline int nocan_ll_rx_pending()
 {
-#ifdef CANZERO_MKR
     return (PORT->Group[0].IN.reg & PORT_PA28)==0;
-#else
-    return (PORT->Group[1].IN.reg & PORT_PB22)==0;
-#endif
 }
 
 int nocan_ll_request_node_id(void);
