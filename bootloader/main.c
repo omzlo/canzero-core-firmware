@@ -5,6 +5,8 @@
 #include "spi.h"
 #include "nocan_ll.h"
 
+#define NACK 0xFF
+
 #define ASSERT_OR_FAIL(expression) do { if (!(expression)) goto general_failure; } while (0)
 #ifndef NULL
     #define NULL ((void *)0)
@@ -26,11 +28,12 @@ uint32_t PAGE_SIZE, PAGES, MAX_FLASH;
 void try_start_app(void);
 void write_page(uint32_t u_addr, uint8_t *u_data, uint32_t u_size);
 void read_mem(uint8_t *u_dst, uint32_t u_src, uint8_t u_size);
+int crc32_cal(const uint32_t addr, const uint32_t len, uint32_t *crc);
 
 
 int main(void)
 {
-    uint32_t pageSizes[] = { 8, 16, 32, 64, 128, 256, 512, 1024 };
+    const uint32_t pageSizes[] = { 8, 16, 32, 64, 128, 256, 512, 1024 }; // actually the page size is 64 bytes for the SAMD21G18
     uint32_t tstamp; // systick_now_ms()
     uint32_t retry_delay;
     int led_on;
@@ -38,10 +41,11 @@ int main(void)
     uint32_t eid;
     uint8_t eid_param;
     uint8_t packet_len;
-    uint8_t packet_data[8];
+    uint8_t packet_data[64] __attribute__ ((aligned (2)));
     uint32_t addr, cur_addr, page_offset;
     uint8_t page[1024] __attribute__ ((aligned (4))); // we use the size of the biggest page.
     uint8_t udid[8];
+    uint32_t crc32, ref_crc32;
 
     SystemInit();
     systick_init();
@@ -109,7 +113,7 @@ int main(void)
                 /* NOTE: we will never recieve anything else than a system message because no subscription exists in the filters. */
                 if (nocan_ll_recv(&eid, &packet_len, packet_data)==NOCAN_LL_OK)
                 {
-                    dprintf("ll_recv %x\r\n",EID_GET_SYS_FUNC(eid));
+                    dprintf("ll_recv f=%x l=%x\r\n",EID_GET_SYS_FUNC(eid),packet_len);
                     eid_param = EID_GET_SYS_PARAM(eid);
 
                     switch (EID_GET_SYS_FUNC(eid)) {
@@ -151,30 +155,53 @@ int main(void)
                             // is it the final packet in the page ?
                             if (eid_param==1) // final packet ?
                             {
-                                // dprintf("[write page]\r\n");
-                                // todo: check CRC32 
-                                write_page(addr,page,page_offset);
-                                nocan_ll_send(EID_SYS(nid,LL_SYS_BOOTLOADER_WRITE_ACK,1),0,NULL);
+                                ASSERT_OR_FAIL(packet_len==4);
+
+                                ref_crc32 = 
+                                    (((uint32_t)packet_data[0])<<24) | 
+                                    (((uint32_t)packet_data[1])<<16) | 
+                                    (((uint32_t)packet_data[2])<<8) | 
+                                    ((uint32_t)packet_data[3]);
+
+                                if (ref_crc32 == crc32)
+                                {
+                                    // When we succeed, we send back an ACK
+                                    dprintf("[write page]\r\n");
+                                    write_page(addr,page,page_offset);
+                                    nocan_ll_send(EID_SYS(nid,LL_SYS_BOOTLOADER_WRITE_ACK,1),0,NULL);
+                                }
+                                else
+                                {
+                                    // When we fail, we send back a NACK with the computed CRC for info.
+                                    packet_data[0] = crc32>>24;
+                                    packet_data[1] = crc32>>16;
+                                    packet_data[2] = crc32>>8;
+                                    packet_data[3] = crc32;
+                                    dprintf("[write failed]\r\n");
+                                    nocan_ll_send(EID_SYS(nid,LL_SYS_BOOTLOADER_WRITE_ACK,NACK),4,packet_data); 
+                                }
                             }
                             else
                             {
                                 if (page_offset+packet_len>PAGE_SIZE)
                                 {
                                     // fail
-                                    nocan_ll_send(EID_SYS(nid,LL_SYS_BOOTLOADER_WRITE_ACK,-1),0,NULL);
+                                    nocan_ll_send(EID_SYS(nid,LL_SYS_BOOTLOADER_WRITE_ACK,NACK),0,NULL);
                                 }
                                 else
                                 {
-                                    //dprintf("[D]");
+                                    dprintf("[D%u]", packet_len);
                                     for (uint32_t i=0;i<packet_len;i++) page[page_offset++] = packet_data[i];
                                     nocan_ll_send(EID_SYS(nid,LL_SYS_BOOTLOADER_WRITE_ACK,0),0,NULL);
+                                    crc32_cal((uint32_t)packet_data, packet_len, &crc32);
+                                    dprintf("[C=%x]", crc32);
                                 }
                             }
                             break;
 
                         case LL_SYS_BOOTLOADER_READ:
                             ASSERT_OR_FAIL(packet_len==0);
-                            ASSERT_OR_FAIL(eid_param<=8);
+                            ASSERT_OR_FAIL(eid_param<=64);
 
                             read_mem(packet_data,addr+page_offset,eid_param);
                             page_offset+=eid_param;
@@ -307,3 +334,34 @@ void read_mem(uint8_t *u_dst, uint32_t u_addr, uint8_t u_len)
     while (u_len--) *u_dst++ = *u_src++;
 }
 
+
+// Hardware CRC32 in SAMD21 seems buggy -- there's even an errata for it.
+// so we'll use a software version.
+//
+static const uint32_t crc32_table[] = {
+    0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
+    0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
+    0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
+    0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
+};
+
+
+int crc32_cal(const uint32_t addr, const uint32_t len, uint32_t *crc)
+{
+    uint8_t tbl_idx = 0;
+    uint32_t _state;
+    uint32_t i;
+    const uint8_t *data=(const uint8_t *)addr;
+
+    _state = 0xFFFFFFFF;
+
+    for (i=0;i<len;i++) 
+    {
+        tbl_idx = _state ^ (data[i] >> (0 * 4));
+        _state = crc32_table[tbl_idx & 0x0f] ^ (_state >> 4);
+        tbl_idx = _state ^ (data[i] >> (1 * 4));
+        _state = crc32_table[tbl_idx & 0x0f] ^ (_state >> 4);
+    }
+    *crc = ~_state;
+    return 0;
+}

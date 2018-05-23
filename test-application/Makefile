@@ -32,7 +32,7 @@ LDFLAGS+= -T$(LDSCRIPT) -mthumb -mcpu=cortex-m0 -Wl,--gc-sections
 CFLAGS+= -mcpu=cortex-m0 -mthumb -g -Os
 CFLAGS+= $(INCLUDES:%=-I $(ASF_ROOT)/%) -I . -I ../lib/
 CFLAGS+= -D$(PTYPE)
-CFLAGS+= -DDEBUG
+# CFLAGS+= -DDEBUG
 CFLAGS+=-pipe -Wall -Werror-implicit-function-declaration -Wpointer-arith -fno-strict-aliasing -ffunction-sections -fdata-sections -Wchar-subscripts -Wcomment -Wformat=2 -Wmain -Wparentheses -Wsequence-point -Wreturn-type -Wswitch -Wtrigraphs -Wunused -Wuninitialized -Wunknown-pragmas -Wfloat-equal -Wundef -Wshadow  -Wwrite-strings -Wsign-compare -Waggregate-return -Wmissing-declarations -Wformat -Wmissing-format-attribute -Wno-deprecated-declarations -Wpacked -Wredundant-decls -Wlong-long -Wunreachable-code -Wcast-align --param max-inline-insns-single=500
 
 $(ELF):		$(OBJS)

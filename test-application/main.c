@@ -40,7 +40,7 @@ int main(void)
         serial_printf("\r\n");
 
 
-        int8_t node_id = nocan_ll_request_node_id();
+        int8_t node_id = nocan_ll_request_node_id(0);
 
         if (node_id<=0)
         {
