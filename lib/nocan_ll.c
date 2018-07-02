@@ -54,10 +54,11 @@ static int retcode(const char *s, int code)
 #endif
 
 static uint16_t channel_filters[12];
+uint8_t nocan_ll_stm32_driver_version = 0;
 
 int nocan_ll_init(uint8_t reset_type)
 {
-    uint8_t buf[4];
+    uint8_t buf[6];
 
     // Configure GPIOs for CAN_RECV_INT and CAN_BUSY_INT as inputs
     PORT->Group[0].DIRCLR.reg = PORT_PA27;
@@ -77,9 +78,11 @@ int nocan_ll_init(uint8_t reset_type)
     delay_ms(250);
 
 
-    nocan_ll_read_registers(4,buf);
+    nocan_ll_read_registers(6,buf);
     if (buf[0]!='N' || buf[1]!='C' || buf[2]!='A' || buf[3]!='N')
         return RETCODE(NOCAN_LL_ERROR);
+
+    nocan_ll_stm32_driver_version = buf[5];
 
     nocan_ll_set_node_id_filter(0);
 

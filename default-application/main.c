@@ -3,7 +3,7 @@
 #include "serial.h"
 #include "systick.h"
 #include <nocan_ll.h>
-
+#include "adc.h"
 
 #define LED_PIN 8
 
@@ -40,7 +40,7 @@ int main(void)
         serial_printf("\r\n");
 
 
-        int8_t node_id = nocan_ll_request_node_id(0);
+        int8_t node_id = nocan_ll_request_node_id();
 
         if (node_id<=0)
         {
@@ -171,5 +171,6 @@ fail:
         serial_printf("Pausing 60 seconds...");
         systick_delay_ms(60000);
     }
+#endif
 }
 

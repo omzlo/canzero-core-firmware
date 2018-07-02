@@ -4,6 +4,7 @@
 #include "systick.h"
 #include "spi.h"
 #include "nocan_ll.h"
+#include "version.h"
 
 #define NACK 0xFF
 
@@ -124,7 +125,9 @@ int main(void)
                             packet_data[1] = DSU->DID.reg>>16;
                             packet_data[2] = DSU->DID.reg>>8;
                             packet_data[3] = DSU->DID.reg;
-                            nocan_ll_send(EID_SYS(nid, LL_SYS_BOOTLOADER_GET_SIGNATURE_ACK, 0),4,packet_data);
+                            packet_data[4] = BOOTLOADER_VERSION;
+                            packet_data[5] = nocan_ll_stm32_driver_version;
+                            nocan_ll_send(EID_SYS(nid, LL_SYS_BOOTLOADER_GET_SIGNATURE_ACK, 0), 6, packet_data);
                             break;
 
                         case LL_SYS_BOOTLOADER_SET_ADDRESS:

@@ -122,6 +122,8 @@ int nocan_ll_send_virtual_serial(int8_t node_id, const char *msg);
 #define NOCAN_STATUS_ERROR_RX_OVERFLOW  0x20
 #define NOCAN_STATUS_ERROR_RX_MESSAGE   0x40
 
+extern uint8_t nocan_ll_stm32_driver_version;
+
 #ifdef __cplusplus
 }
 #endif
