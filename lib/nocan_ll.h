@@ -124,6 +124,8 @@ int nocan_ll_send_virtual_serial(int8_t node_id, const char *msg);
 
 extern uint8_t nocan_ll_stm32_driver_version;
 
+int nocan_ll_enable_bootloader(void);
+
 #ifdef __cplusplus
 }
 #endif

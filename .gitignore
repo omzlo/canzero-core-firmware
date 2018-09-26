@@ -1,6 +1,7 @@
 *.o
 *.elf
 *.hex
+*.bin
 *.d
 .DS_Store
 .*.swp

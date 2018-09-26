@@ -26,7 +26,7 @@ INCLUDES= \
 
 
 #OBJS=$(STARTUP) main.o $(patsubst %.c,$(ASF_ROOT)/%.o,$(SOURCES))
-OBJS = $(STARTUP) main.o systick.o serial.o adc.o ../lib/spi.o ../lib/nocan_ll.o ../lib/nocan.o
+OBJS = $(STARTUP) main.o systick.o serial.o ../lib/spi.o ../lib/nocan_ll.o ../lib/nocan.o
 
 LDFLAGS+= -T$(LDSCRIPT) -mthumb -mcpu=cortex-m0 -Wl,--gc-sections 
 CFLAGS+= -mcpu=cortex-m0 -mthumb -g -Os

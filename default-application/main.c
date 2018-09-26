@@ -3,7 +3,6 @@
 #include "serial.h"
 #include "systick.h"
 #include <nocan_ll.h>
-#include "adc.h"
 
 #define LED_PIN 8
 
@@ -171,6 +170,5 @@ fail:
         serial_printf("Pausing 60 seconds...");
         systick_delay_ms(60000);
     }
-#endif
 }
 

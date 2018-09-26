@@ -16,6 +16,7 @@
 #define SPI_NOCAN_FILTER_COMMIT     0x0C
 #define SPI_NOCAN_FILTER_READ       0x0D   
 #define SPI_NOCAN_NODE_ID           0x0E            
+#define SPI_NOCAN_ENABLE_BOOTLOADER 0x0F
 
 #ifdef ARDUINO
     #define delay_ms(n) delay(n)
@@ -405,4 +406,14 @@ int nocan_ll_send_virtual_serial(int8_t node_id, const char *msg)
     uint8_t len = 0;
     while (msg[len]!=0 && len<64) len++;
     return nocan_ll_send(EID_SYS(node_id, LL_SYS_DEBUG_MESSAGE, 0), len, (const uint8_t *)msg);   
+}
+
+int nocan_ll_enable_bootloader(void)
+{
+    spi_begin();
+    spi_transfer(SPI_NOCAN_ENABLE_BOOTLOADER);
+    spi_transfer(0);
+    spi_end();
+
+    return RETCODE(NOCAN_LL_OK);
 }
