@@ -107,7 +107,7 @@ int nocan_ll_request_node_id(void)
 
     for (attempts=0;attempts<3;attempts++) 
     {
-        status = nocan_ll_send(EID_SYS(0,LL_SYS_ADDRESS_REQUEST,0),8,udid_send);
+        status = nocan_ll_send(EID_SYS(0,LL_SYS_ADDRESS_REQUEST,nocan_ll_stm32_driver_version),8,udid_send);
     
         if (status!=0)
             return RETCODE(status);
@@ -309,6 +309,7 @@ int nocan_ll_add_channel_filter(uint16_t channel_id)
             spi_transfer(filter);
             spi_end();
 
+            channel_filters[filter] = channel_id;
             // TODO: read back
             return RETCODE(NOCAN_LL_OK);
         }
@@ -338,6 +339,7 @@ int nocan_ll_remove_channel_filter(uint16_t channel_id)
             spi_transfer(filter);
             spi_end();
 
+            channel_filters[filter] = 0xFFFF;
             // TODO: read back
             return RETCODE(NOCAN_LL_OK);
         }
